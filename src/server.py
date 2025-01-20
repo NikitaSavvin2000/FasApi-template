@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import logger, public_or_local
-from src.models.valid_type_request import HellowRequest
+from src.models.schemes import HellowRequest
 from src.utils.greeting import hellow_names
 
 if public_or_local == 'LOCAL':
