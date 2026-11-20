@@ -1,0 +1,24 @@
+# Copy to config.yaml only if project-specific defaults are needed.
+app:
+  environment: development
+server:
+  host: 127.0.0.1
+  port: 8080
+  workers: 1
+  reload: false
+  thread_pool_tokens: 40
+logging:
+  level: INFO
+docs:
+  enabled: true
+request:
+  max_body_bytes: 1048576
+client:
+  timeout_seconds: 10
+  max_connections: 20
+database:
+  # Укажите URL глобальной БД, если APP_LOCAL_DEVELOPMENT=false.
+  url: null
+cors:
+  enabled: false
+trusted_hosts: []

@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.21"
+          python-version: "3.11"
+      - run: uv lock --check
+      - run: uv sync --locked --group dev
+      - run: uv run --locked ruff format --check .
+      - run: uv run --locked ruff check .
+      - run: uv run --locked mypy src
+      - run: uv run --locked pytest --cov-report=xml
+      - run: uv build
+      - name: Build and smoke-test Docker image
+        run: |
+          docker build --tag fastapi-template:ci .
+          docker run --detach --name fastapi-template-ci --publish 8080:8080 \
+            --env APP_SERVER__HOST=0.0.0.0 fastapi-template:ci
+          trap 'docker logs fastapi-template-ci; docker rm -f fastapi-template-ci || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8080/v1/health/ready; then exit 0; fi
+            sleep 1
+          done
+          exit 1

@@ -1,52 +1,123 @@
-[project]
-name = "inputation_bakcend"
-version = "0.1.0"
-description = ""
-authors = [
-    {name = "Nikita Savvin", email = "nikita.vsav@gmail.com"},
-]
-dependencies = [
-    "pytest>=8.1.1",
-    "tox==4.14.2",
-    "pre-commit>=3.6.2",
-    "pytest-cov>=4.1.0",
-    "coverage-badge>=1.1.0",
-    "pdm-bump>=0.7.3",
-    "pydantic>=2.6.3",
-    "fastapi>=0.110.0",
-    "uvicorn>=0.28.0",
-    "pandas>=2.2.1",
-    "coverage==7.4.4",
-]
-requires-python = ">=3.9"
-readme = "README.md"
-license = {text = "MIT"}
-
-[project.optional-dependencies]
-test = [
-    "fastapi-cprofile>=0.0.2",
-]
+# Сборщик пакета и версия Hatchling, совместимая с этим шаблоном.
 [build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
 
+[project]
+# Имя устанавливаемого дистрибутива, используемое в importlib.metadata.
+name = "fastapi-template"
+# Каноническая версия сервиса: major-номер формирует URL-префикс API `/v1`.
+version = "1.0.0"
+# Краткое назначение пакета для метаданных сборки.
+description = "Минимальный расширяемый шаблон микросервиса на FastAPI."
+# Основная пользовательская документация пакета.
+readme = "README.md"
+# Поддерживается только согласованная с CI и Docker версия Python.
+requires-python = ">=3.11,<3.12"
+# Лицензия распространяемого шаблона.
+license = { text = "MIT" }
+# Обобщённое авторство метаданных шаблона.
+authors = [{ name = "Template maintainers" }]
+# FastAPI предоставляет HTTP-фреймворк и OpenAPI-схему работающего приложения.
+dependencies = [
+  # Фреймворк HTTP API.
+  "fastapi>=0.133,<0.134",
+  # Типизированная конфигурация и интеграция с dotenv.
+  "pydantic-settings>=2.13,<3",
+  # Безопасная загрузка локальных YAML-конфигураций.
+  "PyYAML>=6.0.2,<7",
+  # ASGI-сервер с поддержкой production и разработки.
+  "uvicorn[standard]>=0.41,<0.42",
+]
 
-[tool.pdm]
-distribution = true
+# Инструменты, необходимые только для разработки и проверок.
+[dependency-groups]
+dev = [
+  # HTTP-клиент для настоящих интеграционных и потоковых тестов.
+  "httpx2>=2.16,<3",
+  # Проверка примеров и ответов по JSON Schema 2020-12.
+  "jsonschema>=4.25,<5",
+  # Статическая проверка типов в строгом режиме.
+  "mypy>=1.19,<2",
+  # Валидация OpenAPI-спецификации, извлечённой у сервера.
+  "openapi-spec-validator>=0.7.2,<0.8",
+  # Единые обязательные проверки перед коммитом.
+  "pre-commit>=4.5,<5",
+  # Тестовый раннер.
+  "pytest>=9.0,<10",
+  # Измерение покрытия значимой логики.
+  "pytest-cov>=7.0,<8",
+  # Единственный линтер, сортировщик импортов и форматтер.
+  "ruff>=0.15,<0.16",
+  # Типовые заглушки для строгой проверки безопасного YAML-загрузчика.
+  "types-PyYAML>=6.0.12,<7",
+]
 
+# Устанавливать Python-пакет из src layout, а не из корня репозитория.
+[tool.hatch.build.targets.wheel]
+packages = ["src/fastapi_template"]
+
+# Настройки pytest применяются ко всем локальным, CI и pre-commit запускам.
 [tool.pytest.ini_options]
-disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
 addopts = [
-    "--import-mode=importlib",
+  # Изолировать импорты тестов от структуры исходных каталогов.
+  "--import-mode=importlib",
+  # Превращать неизвестные опции pytest в ошибку.
+  "--strict-config",
+  # Превращать неизвестные маркеры pytest в ошибку.
+  "--strict-markers",
+  # Измерять покрытие только кода устанавливаемого пакета.
+  "--cov=fastapi_template",
+  # Показывать непокрытые строки в консольном отчёте.
+  "--cov-report=term-missing",
+  # Не допускать падения покрытия значимой логики ниже 85 процентов.
+  "--cov-fail-under=85",
 ]
-testpaths = [
-    "tests",
-]
-timeout = 300
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "unit_transform",
-]
-pythonpath = [
-    "src",
-]
+# Искать тесты только в выделенном корневом каталоге.
+testpaths = ["tests"]
+
+# Настройки запуска coverage.
+[tool.coverage.run]
+# Учитывать покрытие ветвей, а не только строк.
+branch = true
+# Не собирать покрытие внешних библиотек.
+source = ["fastapi_template"]
+
+# Настройки текстового отчёта coverage.
+[tool.coverage.report]
+# Выводить номера непокрытых строк.
+show_missing = true
+# Не скрывать полностью покрытые файлы, чтобы отчёт был полным.
+skip_covered = false
+
+# Общие настройки Ruff.
+[tool.ruff]
+# Использовать синтаксис и правила целевой версии Python.
+target-version = "py311"
+# Ограничивать длину строки единым правилом.
+line-length = 100
+# Считать эти каталоги исходным кодом проекта при анализе импортов.
+src = ["src", "tests"]
+
+# Набор правил единственного линтера проекта.
+[tool.ruff.lint]
+# Проверять ошибки, импорты, modern Python, bugbear и простые упрощения.
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+# Настройки сортировки импортов Ruff.
+[tool.ruff.lint.isort]
+# Распознавать пакет шаблона как first-party импорт.
+known-first-party = ["fastapi_template"]
+
+# Строгая статическая типизация исходного кода приложения.
+[tool.mypy]
+# Проверять правила типов в контексте Python 3.11.
+python_version = "3.11"
+# Анализировать только устанавливаемый исходный пакет.
+files = ["src"]
+# Включить полный строгий набор проверок mypy.
+strict = true
+# Сообщать о недостижимых ветвях, указывающих на ошибку в логике.
+warn_unreachable = true
+# Делать сообщения диагностики удобными для чтения в терминале.
+pretty = true

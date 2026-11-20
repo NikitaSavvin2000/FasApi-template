@@ -1,72 +1,83 @@
-<p align="center">
+# Шаблон микросервиса FastAPI
 
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
-![Code Coverage](coverage.svg)
+FastAPI-сервис с API `/v1` и `/v2`, локальной SQLite БД для разработки и
+контрактными тестами. Требуются Python 3.11 и [uv](https://docs.astral.sh/uv/).
 
-</p>
+## 1. Настройка окружения
 
-# Запуск на своей машине
+Выполните из корня репозитория:
 
-#### Установка зависимостей
 ```bash
-pip install pdm
-pdm install
+uv sync --locked --group dev
+source .venv/bin/activate
+cp .env.example .env
 ```
 
+В `.env` установлен `APP_LOCAL_DEVELOPMENT=true`: при запуске создаётся
+`local_services/local.sqlite3` и применяется `local_services/schema.sql`.
 
-Активация окружения
+Для глобальной БД измените флаг и укажите URL:
+
+```bash
+# .env
+APP_LOCAL_DEVELOPMENT=false
+```
+
+```bash
+cp config.example.yaml config.yaml
+# затем укажите database.url в config.yaml
+```
+
+Если `APP_LOCAL_DEVELOPMENT` отсутствует, его значение — `false`, поэтому
+`database.url` обязателен.
+
+## 2. Запуск проекта
+
 ```bash
 source .venv/bin/activate
+python main.py
 ```
 
+Сервис слушает `http://127.0.0.1:8080`.
 
-Запуск на своей машине
 ```bash
-python -m src.server
+curl http://127.0.0.1:8080/v1/health/ready
+open http://127.0.0.1:8080/v1/docs
+open http://127.0.0.1:8080/v2/docs
 ```
 
-После запуска ui микросервис адоступен по адресу
+Локальной БД можно управлять отдельно:
+
 ```bash
-http://0.0.0.0:7070/template_fast_api/v1/#/
+python local_services/manage.py status
+python local_services/manage.py reset
 ```
 
+## 3. Проверки перед commit и push
 
-# Запуск контейнера публично
+После активации окружения установите оба Git hook:
 
-### Строим контейнер
 ```bash
-    docker build -t fast_api_template .
-```
-Узнаем его IMAGE ID 
-```bash
-docker images
+source .venv/bin/activate
+python -m pre_commit install --hook-type pre-commit
+python -m pre_commit install --hook-type pre-push
 ```
 
+Перед commit запускаются форматирование, линтер, mypy и тесты. Перед каждым
+`git push` запускается полный `pytest`; если он завершится ошибкой, push будет
+отменён.
+
+## 4. Запуск тестов
+
+Полный набор:
+
 ```bash
-docker run -d -p 7071:7071 bb1942a77c32
+source .venv/bin/activate
+python -m pytest -v
 ```
 
-```bash
-docker run -d -p 80:7071 bb1942a77c32
-```
+Проверка только локальной и глобальной конфигурации БД:
 
 ```bash
-docker run -d -p 7071:80 <IMAGE ID>
-```
-
-
-
-# Запуск контейнера локально
-
-### Строим контейнер
-```bash
-docker build -t fast_api_template .
-```
-Узнаем его ID
-```bash
-docker images
-```
-
-```bash
-docker run -p 7071:7071 <IMAGE ID>
+python -m pytest --no-cov -v tests/unit/test_database.py tests/unit/test_config.py
 ```
